@@ -107,21 +107,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    nextBtn.addEventListener('click', function() {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        showSlide(currentSlide);
-    });
-    
-    prevBtn.addEventListener('click', function() {
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        showSlide(currentSlide);
-    });
+    if (prevBtn && nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        });
+        
+        prevBtn.addEventListener('click', function() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        });
+    }
 
     // Auto-rotate testimonials
-    setInterval(() => {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        showSlide(currentSlide);
-    }, 8000);
+    if (totalSlides > 0) {
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }, 8000);
+    }
 
     // Scroll to top button
     const scrollTopBtn = document.createElement('button');
@@ -161,30 +165,81 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll', checkScroll);
     checkScroll(); // Initial check
 
-    // Contact form handling
-    const contactForm = document.querySelector('.contact-form form');
+    // Contact form handling with Google Apps Script integration
+    const contactForm = document.getElementById('contactForm');
     
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
+        contactForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Get form values
-            const name = this.querySelector('input[type="text"]').value;
-            const email = this.querySelector('input[type="email"]').value;
-            const message = this.querySelector('textarea').value;
+            const formData = new FormData(contactForm);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone') || '',
+                message: formData.get('message')
+            };
             
-            // Here you would typically send the form data to a server
-            // For demo purposes, we'll just show a success message
-            this.innerHTML = `
-                <div class="success-message">
-                    <div class="icon">
-                        <i class="fas fa-check-circle"></i>
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnLoading = submitBtn.querySelector('.btn-loading');
+            const messageDiv = contactForm.querySelector('.form-message');
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            submitBtn.disabled = true;
+            messageDiv.style.display = 'none';
+            
+            try {
+                const CONTACT_FORM_URL = CONFIG.CONTACT_FORM_URL;
+                
+                const response = await fetch(CONTACT_FORM_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messageDiv.innerHTML = `
+                        <div class="success-message">
+                            <div class="icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h3>Thank You, ${data.name}!</h3>
+                            <p>${result.message}</p>
+                        </div>
+                    `;
+                    contactForm.reset();
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="error-message">
+                            <div class="icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <p>${result.message}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.innerHTML = `
+                    <div class="error-message">
+                        <div class="icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <p>Network error. Please check your connection and try again.</p>
                     </div>
-                    <h3>Thank You, ${name}!</h3>
-                    <p>Your message has been sent successfully. We'll get back to you soon.</p>
-                    <button class="btn btn-primary" onclick="location.reload()">Send Another Message</button>
-                </div>
-            `;
+                `;
+            } finally {
+                // Reset button state
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                submitBtn.disabled = false;
+                messageDiv.style.display = 'block';
+            }
         });
     }
 
@@ -197,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add styles for scroll-top button
+    // Add styles for scroll-top button and form messages
     const style = document.createElement('style');
     style.textContent = `
         .scroll-top-btn {
@@ -247,15 +302,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        .success-message {
+        .form-message {
+            padding: 1rem;
+            border-radius: 5px;
             text-align: center;
-            padding: 2rem;
         }
         
-        .success-message .icon {
-            font-size: 3rem;
-            color: var(--secondary-1);
-            margin-bottom: 1rem;
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .success-message .icon,
+        .error-message .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .success-message .icon i {
+            color: #28a745;
+        }
+        
+        .error-message .icon i {
+            color: #dc3545;
+        }
+        
+        .btn-loading {
+            color: #666;
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
     `;
     document.head.appendChild(style);
