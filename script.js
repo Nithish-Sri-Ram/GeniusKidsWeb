@@ -91,42 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Testimonial Slider
-    const testimonials = document.querySelectorAll('.testimonial');
-    const prevBtn = document.querySelector('.prev-btn');
-    const nextBtn = document.querySelector('.next-btn');
-    let currentSlide = 0;
-    const totalSlides = testimonials.length;
-    
-    // Initially show only the first testimonial
-    showSlide(currentSlide);
-    
-    function showSlide(index) {
-        testimonials.forEach((testimonial, i) => {
-            testimonial.style.display = i === index ? 'block' : 'none';
-        });
-    }
-    
-    if (prevBtn && nextBtn) {
-        nextBtn.addEventListener('click', function() {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            showSlide(currentSlide);
-        });
-        
-        prevBtn.addEventListener('click', function() {
-            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-            showSlide(currentSlide);
-        });
-    }
-
-    // Auto-rotate testimonials
-    if (totalSlides > 0) {
-        setInterval(() => {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            showSlide(currentSlide);
-        }, 8000);
-    }
-
     // Scroll to top button
     const scrollTopBtn = document.createElement('button');
     scrollTopBtn.classList.add('scroll-top-btn');
@@ -147,23 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
             behavior: 'smooth'
         });
     });
-
-    // Add animations on scroll
-    const animateElements = document.querySelectorAll('.about-content, .mission-vision, .award, .method-principles, .learning-area, .gallery-item, .contact-content');
-    
-    function checkScroll() {
-        animateElements.forEach(element => {
-            const elementTop = element.getBoundingClientRect().top;
-            const windowHeight = window.innerHeight;
-            
-            if (elementTop < windowHeight - 100) {
-                element.classList.add('fade-in');
-            }
-        });
-    }
-    
-    window.addEventListener('scroll', checkScroll);
-    checkScroll(); // Initial check
 
     // Contact form handling with Google Apps Script integration
     const contactForm = document.getElementById('contactForm');
